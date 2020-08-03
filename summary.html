@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <title>Narrative Visualization CS 489</title>
+</head>
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<body>
+  <h1>Coronavirus Lockdowns in the USA</h1>
+  <h3>Description</h3>
+  <p>
+    both Colorado and Montana were the first states to lift stay at home orders, as we can see below the lockdown
+    did not have sufficient time to take effect in Colorado. New York while being the hardest hit during the initial
+    phase of this pandemic has also seen the most effective lockdown 
+  </p>
+  
+  <a href="states.html">previous slide </a>
+  <h3>Select a State</h3>
+  <select id="selectButton"></select>
+  <div id="my_dataviz"></div>
+  <h3>Stay at Home Lifted</h3>
+  <p>
+    <ul>
+      <li>April 26: Colorado, Montana</li>
+      <li>April 27: Mississippi </li>
+      <li>April 30: Alabama, Georgia, Idaho, Maine, Tennessee, Texas</li>
+      <li>May 1: Indiana</li>
+      <li>May 3: Missouri</li>
+      <li>May 4: Florida, Kansas, South Carolina, West Virginia</li>
+      <li>May 13: Wisconsin</li>
+      <li>May 15: Louisiana, Maryland</li>
+      <li>May 18: Massachusetts</li>
+      <li>May 30: Illinois</li>
+      <li>June 2: Michigan</li>
+      <li>June 9: New Jersey</li>
+      <li>April 11: New Hampshire</li>
+    </ul>
+  </p>
+</body>
+
+<style>
+  .myCircle:hover {
+    stroke: black;
+  }
+</style>
+
+
+<script>
+    var margin = { top: 10, right: 30, bottom: 30, left: 60 },
+        width = 800 - margin.left - margin.right,
+        height = 600 - margin.top - margin.bottom;
+    var svg = d3.select("#my_dataviz")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+    d3.csv("https://raw.githubusercontent.com/PeterCieslik/CS498DV/master/finalTotals.csv",
+
+        function (d) {
+            return {
+                date: d3.timeParse("%Y-%m-%d")(d.date),
+                value: d.co,
+                tx: d.tx,
+                ut: d.ut,
+                va: d.va,
+                vt: d.vt,
+                wa: d.wa,
+                wi: d.wi,
+                wv: d.wv,
+                wy: d.wy,
+                al: d.al,
+                ar: d.ar,
+                az: d.az,
+                ca: d.ca,
+                co: d.co,
+                ct: d.ct,
+                dc: d.dc,
+                de: d.de,
+                fl: d.fl,
+                ga: d.ga,
+                hi: d.hi,
+                ia: d.ia,
+                id: d.id,
+                il: d.il,
+                in: d.in,
+                ks: d.ks,
+                ky: d.ky,
+                la: d.la,
+                ma: d.ma,
+                md: d.md,
+                me: d.me,
+                mi: d.mi,
+                mn: d.mn,
+                mo: d.mo,
+                ms: d.ms,
+                mt: d.mt,
+                nc: d.nc,
+                nd: d.nd,
+                ne: d.ne,
+                nh: d.nh,
+                nj: d.nj,
+                nm: d.nm,
+                nv: d.nv,
+                ny: d.ny,
+                oh: d.oh,
+                ok: d.ok,
+                or: d.or,
+                pa: d.pa,
+                ri: d.ri,
+                sc: d.sc,
+                sd: d.sd,
+                tn: d.tn,
+                ak: d.ak
+            }
+        },
+        function (data) {
+            var allGroup = ["co", "mt", "ms", "al", "ga", "id", "me", "tn", "tx", "in", "mo", "fl", "ks", "sc", 
+            "wv", "wi", "la", "md", "ma", "il", "mi", "nj", "nh"]
+            d3.select("#selectButton")
+                .selectAll('myOptions')
+                .data(allGroup)
+                .enter()
+                .append('option')
+                .text(function (d) { return d; })
+                .attr("value", function (d) { return d; })
+
+            var x = d3.scaleTime()
+                .domain(d3.extent(data, function (d) { return d.date; }))
+                .range([0, width]);
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x));
+
+            var y = d3.scaleLinear()
+                .domain([0, 600000])
+                .range([height, 0]);
+            svg.append("g")
+                .call(d3.axisLeft(y));
+
+            var Tooltip = d3.select("#my_dataviz")
+                .append("div")
+                .style("opacity", 0)
+                .attr("class", "tooltip")
+                .style("background-color", "white")
+                .style("border", "solid")
+                .style("border-width", "2px")
+                .style("border-radius", "5px")
+                .style("padding", "5px")
+
+            var mouseover = function (d) {
+                Tooltip
+                    .style("opacity", 1)
+            }
+            var mousemove = function (d) {
+                Tooltip
+                    .html("Cases: " + d.value + " date: " + d.date)
+                    .style("left", (d3.mouse(this)[0] + 70) + "px")
+                    .style("top", (d3.mouse(this)[1]) + "px")
+            }
+            var mouseleave = function (d) {
+                Tooltip
+                    .style("opacity", 0)
+            }
+            var line = svg
+                .append('g')
+                .append("path")
+                .datum(data)
+                .attr("d", d3.line()
+                    .curve(d3.curveBasis)
+                    .x(function (d) { return x(+d.date) })
+                    .y(function (d) { return y(+d.value) })
+                )
+                .attr("stroke", "black")
+                .style("stroke-width", 4)
+                .style("fill", "none")
+
+            var start = new Date(2020, 03, 26, 00, 00, 00);
+            var end = new Date(2020, 03, 26, 00, 00);
+
+            var dot = svg
+                .append("g")
+                .selectAll("dot")
+                .data(data)
+                .enter()
+                .append("circle")
+                .filter(function (d) { return (d.date >= start && d.date <= end) })
+                .style("fill", "green")
+                .attr("class", "myCircle")
+                .attr("cx", function (d) { return x(d.date) })
+                .attr("cy", function (d) { return y(d.value) })
+                .attr("r", 5)
+                .attr("stroke", "#69b3a2")
+                .attr("stroke-width", 1)
+                .attr("fill", "white")
+                .on("mouseover", mouseover)
+                .on("mousemove", mousemove)
+                .on("mouseleave", mouseleave)
+
+            function update(selectedGroup) {
+
+                var dataFilter = data.map(function (d) { return { date: d.date, value: d[selectedGroup] } })
+
+                line
+                    .datum(dataFilter)
+                    .transition()
+                    .duration(1000)
+                    .attr("d", d3.line()
+                        .x(function (d) { return x(+d.date) })
+                        .y(function (d) { return y(+d.value) })
+                    )
+
+                if (selectedGroup == "co" || selectedGroup == "mt") {
+                    var start = new Date(2020, 03, 26, 00, 00, 00);
+                    var end = new Date(2020, 03, 26, 00, 00);
+                }
+                if (selectedGroup == "ms") {
+                    var start = new Date(2020, 03, 27, 00, 00, 00);
+                    var end = new Date(2020, 03, 27, 00, 00);
+                }
+                if (selectedGroup == "al" || selectedGroup == "ga" || selectedGroup == "id" || selectedGroup == "me" || selectedGroup == "tn" || selectedGroup == "tx") {
+                    var start = new Date(2020, 03, 30, 00, 00, 00);
+                    var end = new Date(2020, 03, 30, 00, 00);
+                }
+                if (selectedGroup == "in") {
+                    var start = new Date(2020, 04, 01, 00, 00, 00);
+                    var end = new Date(2020, 04, 01, 00, 00);
+                }
+                if (selectedGroup == "mo") {
+                    var start = new Date(2020, 04, 03, 00, 00, 00);
+                    var end = new Date(2020, 04, 03, 00, 00);
+                }
+                if (selectedGroup == "fl" || selectedGroup == "ks" || selectedGroup == "sc" || selectedGroup == "wv") {
+                    var start = new Date(2020, 04, 04, 00, 00, 00);
+                    var end = new Date(2020, 04, 04, 00, 00);
+                }
+                if (selectedGroup == "wi") {
+                    var start = new Date(2020, 04, 13, 00, 00, 00);
+                    var end = new Date(2020, 04, 13, 00, 00);
+                }
+                if (selectedGroup == "la" || selectedGroup == "md" || selectedGroup == "ri" || selectedGroup == "dc") {
+                    var start = new Date(2020, 02, 28, 00, 00, 00);
+                    var end = new Date(2020, 02, 28, 00, 00);
+                }
+                if (selectedGroup == "ks" || selectedGroup == "md" || selectedGroup == "ma") {
+                    var start = new Date(2020, 04, 18, 00, 00, 00);
+                    var end = new Date(2020, 04, 18, 00, 00);
+                }
+                if (selectedGroup == "il") {
+                    var start = new Date(2020, 04, 30, 00, 00, 00);
+                    var end = new Date(2020, 04, 30, 00, 00);
+                }
+                if (selectedGroup == "mi") {
+                    var start = new Date(2020, 05, 02, 00, 00, 00);
+                    var end = new Date(2020, 05, 02, 00, 00);
+                }
+                if (selectedGroup == "nj") {
+                    var start = new Date(2020, 05, 09, 00, 00, 00);
+                    var end = new Date(2020, 05, 09, 00, 00);
+                }
+                if (selectedGroup == "nh") {
+                    var start = new Date(2020, 05, 11, 00, 00, 00);
+                    var end = new Date(2020, 05, 11, 00, 00);
+                }
+
+                var dotFilter = dataFilter.filter(function (d) { return d.date >= start && d.date <= end })
+                dot
+                    .data(dotFilter)
+                    .transition()
+                    .duration(1000)
+                    .attr("cx", function (d) { return x(+d.date) })
+                    .attr("cy", function (d) { return y(+d.value) })
+            }
+            d3.select("#selectButton").on("change", function (d) {
+                var selectedOption = d3.select(this).property("value")
+                update(selectedOption)
+            })
+            var Tooltip = d3.select("#my_dataviz")
+                .append("div")
+                .style("opacity", 0)
+                .attr("class", "tooltip")
+                .style("background-color", "white")
+                .style("border", "solid")
+                .style("border-width", "2px")
+                .style("border-radius", "5px")
+                .style("padding", "5px")
+        })
+</script>
